@@ -2,7 +2,7 @@
 
 Complete step-by-step guide to install KlipperXL on a Prusa XL with XLBuddy board.
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-05-08
 **Tested Configuration:** Prusa XL 5-tool with XLBuddy mainboard
 
 ---
@@ -17,8 +17,8 @@ Complete step-by-step guide to install KlipperXL on a Prusa XL with XLBuddy boar
 6. [Flash XLBuddy via USB Drive](#6-flash-xlbuddy-via-usb-drive)
 7. [Fix Klipper Update Manager (Dirty State)](#7-fix-klipper-update-manager-dirty-state)
 8. [Optional: LED Strips and Webcam](#8-optional-led-strips-and-webcam)
-9. [Configure OrcaSlicer](#9-configure-orcaslicer)
-10. [First Boot and Calibration](#10-first-boot-and-calibration)
+9. [First Boot and Calibration](#9-first-boot-and-calibration)
+10. [Configure OrcaSlicer](#10-configure-orcaslicer)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Advanced: DFU Flash and Recovery](#12-advanced-dfu-flash-and-recovery)
 
@@ -502,19 +502,115 @@ The default config is set for 1920x1080 at 30fps using the ustreamer backend. Ed
 
 ---
 
-## 9. Configure OrcaSlicer
+## 9. First Boot and Calibration
+
+### 9.1 Initial Startup
+
+1. Open your web UI in browser: `http://<PI_IP>`
+2. You should see the printer interface
+3. Check for any errors in the console
+
+### 9.2 Verify Dwarf Communication
+
+In the console, run:
+```gcode
+DWARF_STATUS
+```
+
+You should see temperatures for all 5 Dwarfs (D1-D5).
+
+### 9.3 Home the Printer
+
+```gcode
+G28 X Y    ; Home X and Y (sensorless)
+T0         ; Pick tool 0
+G28 Z      ; Home Z with loadcell
+```
+
+### 9.4 Z Tilt Correction (Level the Bed)
+
+```gcode
+PRUSA_Z_LEVEL
+```
+
+**Note:** This is LOUD - the bed crashes into the top frame. This is normal!
+
+### 9.5 Calibrate Dock Positions
+
+Each printer's dock positions vary slightly. Run dock calibration to measure the actual positions:
+
+```gcode
+DOCK_CALIBRATE
+```
+
+This will guide you through each dock interactively:
+1. Remove dock pins
+2. Loosen pillar screws
+3. Slide carriage by hand to lock onto the tool
+4. Tighten screws
+5. Install pins
+6. Automatic pick/park verification
+
+The carriage moves to center between docks so you can access the next one. After all docks are calibrated, run `SAVE_CONFIG` to save the positions.
+
+**Note:** Default dock positions (T0=25mm, T1=107mm, T2=189mm, T3=271mm, T4=353mm, Y=455mm) are included in printer.cfg. Dock calibration refines these for your specific machine.
+
+### 9.6 Test Each Tool
+
+```gcode
+T0    ; Pick tool 0
+T1    ; Pick tool 1 (parks T0, picks T1)
+T2    ; Pick tool 2
+T3    ; Pick tool 3
+T4    ; Pick tool 4
+T0    ; Back to T0
+```
+
+Verify each tool picks and parks cleanly.
+
+### 9.7 Heat Test
+
+```gcode
+T0
+M104 T0 S200    ; Heat T0 to 200C
+M104 T1 S200    ; Heat T1 to 200C
+M109 T0 S200    ; Wait for T0
+```
+
+Verify temperatures in the web UI match expectations.
+
+### 9.8 Calibrate Tool Offsets
+
+**IMPORTANT: You need the calibration pin installed at bed center (X=180, Y=180)**
+
+```gcode
+CALIBRATE_TOOL_OFFSETS
+```
+
+This will:
+1. Pick each tool (T0-T4)
+2. Probe the calibration pin from multiple angles
+3. Calculate and save X, Y, Z offsets for each tool
+
+**Note on tool offsets:** Offsets are stored in Prusa/Marlin convention but automatically negated when applied via Klipper's SET_GCODE_OFFSET. This is handled internally - you don't need to worry about sign conventions.
+
+If you encounter any "!! Probe triggered prior to movement" issues when your Probing XY begun try to increase your XY threshold with the command SET_XY VALUE=XX (increase it by 10 increment). You can run the tool offset calibration without the cleaning procedure (already done the first time) with this command CALIBRATE_TOOLS SKIP_CLEAN=1.
+
+---
+
+## 10. Configure OrcaSlicer
 
 Use the built-in **Generic Tool Changer** profile as your base. It already has
 multi-tool settings (wipe tower, purge volumes, tool change handling). You only
 need to make the changes below.
 
-### 9.1 Select Printer Profile
+### 10.1 Select Printer Profile
 
 1. Open OrcaSlicer
 2. Go to **Printer** tab > **Add Printer** or select from dropdown
 3. Choose **Generic Tool Changer** (5-tool variant)
 
-### 9.2 Change These 4 Settings
+### 10.2 Change These 4 Settings
 
 #### 1. G-code Flavor
 
@@ -559,7 +655,7 @@ safe for Prusa XL hardware. Change to these Prusa-matched values:
 
 Prusa XL hardware limit is 7000. Never exceed this.
 
-### 9.3 Additional Settings
+### 10.3 Additional Settings
 
 #### Pause G-code
 ```gcode
@@ -610,12 +706,12 @@ TIMELAPSE_TAKE_FRAME
 | Enable ooze prevention | **ON** |
 | Standby temperature delta | **-110** |
 
-### 9.4 Save as New Profile
+### 10.4 Save as New Profile
 
 Save as a new printer profile (e.g., "KlipperXL 5-Tool") so your changes
 don't get overwritten by OrcaSlicer updates.
 
-### 9.5 Alternative: Import Pre-configured Profile
+### 10.5 Alternative: Import Pre-configured Profile
 
 If you prefer importing a complete profile bundle instead of modifying
 the generic tool changer profile:
@@ -626,101 +722,10 @@ the generic tool changer profile:
 
 ---
 
-## 10. First Boot and Calibration
-
-### 10.1 Initial Startup
-
-1. Open your web UI in browser: `http://<PI_IP>`
-2. You should see the printer interface
-3. Check for any errors in the console
-
-### 10.2 Verify Dwarf Communication
-
-In the console, run:
-```gcode
-DWARF_STATUS
-```
-
-You should see temperatures for all 5 Dwarfs (D1-D5).
-
-### 10.3 Home the Printer
-
-```gcode
-G28 X Y    ; Home X and Y (sensorless)
-T0         ; Pick tool 0
-G28 Z      ; Home Z with loadcell
-```
-
-### 10.4 Z Tilt Correction (Level the Bed)
-
-```gcode
-PRUSA_Z_LEVEL
-```
-
-**Note:** This is LOUD - the bed crashes into the top frame. This is normal!
-
-### 10.5 Calibrate Dock Positions
-
-Each printer's dock positions vary slightly. Run dock calibration to measure the actual positions:
-
-```gcode
-DOCK_CALIBRATE
-```
-
-This will guide you through each dock interactively:
-1. Remove dock pins
-2. Loosen pillar screws
-3. Slide carriage by hand to lock onto the tool
-4. Tighten screws
-5. Install pins
-6. Automatic pick/park verification
-
-The carriage moves to center between docks so you can access the next one. After all docks are calibrated, run `SAVE_CONFIG` to save the positions.
-
-**Note:** Default dock positions (T0=25mm, T1=107mm, T2=189mm, T3=271mm, T4=353mm, Y=455mm) are included in printer.cfg. Dock calibration refines these for your specific machine.
-
-### 10.6 Calibrate Tool Offsets
-
-**IMPORTANT: You need the calibration pin installed at bed center (X=180, Y=180)**
-
-```gcode
-CALIBRATE_TOOL_OFFSETS
-```
-
-This will:
-1. Pick each tool (T0-T4)
-2. Probe the calibration pin from multiple angles
-3. Calculate and save X, Y, Z offsets for each tool
-
-**Note on tool offsets:** Offsets are stored in Prusa/Marlin convention but automatically negated when applied via Klipper's SET_GCODE_OFFSET. This is handled internally - you don't need to worry about sign conventions.
-
-### 10.7 Test Each Tool
-
-```gcode
-T0    ; Pick tool 0
-T1    ; Pick tool 1 (parks T0, picks T1)
-T2    ; Pick tool 2
-T3    ; Pick tool 3
-T4    ; Pick tool 4
-T0    ; Back to T0
-```
-
-Verify each tool picks and parks cleanly.
-
-### 10.8 Heat Test
-
-```gcode
-T0
-M104 T0 S200    ; Heat T0 to 200C
-M104 T1 S200    ; Heat T1 to 200C
-M109 T0 S200    ; Wait for T0
-```
-
-Verify temperatures in the web UI match expectations.
-
----
-
 ## 11. Troubleshooting
+
+### Random deconnexion of the pi/web interface
+Make sure you are using a Raspberry Pi or a sufficiently powerful computer. The Pi 3 and earlier models are not powerful enough to run Klipper XL.
 
 ### "make: cpp: No such file or directory" during firmware build
 - Missing host C preprocessor — install build tools:
