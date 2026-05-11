@@ -598,7 +598,7 @@ If you encounter any "!! Probe triggered prior to movement" issues when your Pro
 
 ---
 
-## 10. Configure OrcaSlicer
+## 10. Configure OrcaSlicer (and PrusaSlicer)
 
 Use the built-in **Generic Tool Changer** profile as your base. It already has
 multi-tool settings (wipe tower, purge volumes, tool change handling). You only
