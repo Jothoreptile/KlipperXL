@@ -720,6 +720,13 @@ the generic tool changer profile:
 2. Select `KlipperXL/orcaslicer/KlipperXL_Profile.ini`
 3. Profiles appear in your printer/print/filament dropdowns
 
+
+### 10.5 PrusaSlicer
+
+If you still want to use PrusaSlicer with the legacy profile, do the same as Orca, except for the start gcode used this one:
+```gcode
+START_PRINT EXTRUDER_TEMP={first_layer_temperature[initial_extruder]} BED_TEMP=[first_layer_bed_temperature]] TOOL=[initial_extruder] TOTAL_LAYER_COUNT={total_layer_count} X0={first_layer_print_min[0]} Y0={first_layer_print_min[1]} X1={first_layer_print_max[0]} Y1={first_layer_print_max[1]}
+```
 ---
 
 ## 11. Troubleshooting
