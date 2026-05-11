@@ -18,7 +18,7 @@ Complete step-by-step guide to install KlipperXL on a Prusa XL with XLBuddy boar
 7. [Fix Klipper Update Manager (Dirty State)](#7-fix-klipper-update-manager-dirty-state)
 8. [Optional: LED Strips and Webcam](#8-optional-led-strips-and-webcam)
 9. [First Boot and Calibration](#9-first-boot-and-calibration)
-10. [Configure OrcaSlicer and PrusaSlicer](#10-configure-orcaslicer)
+10. [Configure OrcaSlicer and PrusaSlicer](#10-configure-orcaslicer-and-PrusaSlicer)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Advanced: DFU Flash and Recovery](#12-advanced-dfu-flash-and-recovery)
 
@@ -598,7 +598,7 @@ If you encounter any "!! Probe triggered prior to movement" issues when your Pro
 
 ---
 
-## 10. Configure OrcaSlicer (and PrusaSlicer)
+## 10. Configure OrcaSlicer and PrusaSlicer
 
 Use the built-in **Generic Tool Changer** profile as your base. It already has
 multi-tool settings (wipe tower, purge volumes, tool change handling). You only
